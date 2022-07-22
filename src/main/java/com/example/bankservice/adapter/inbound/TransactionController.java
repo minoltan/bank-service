@@ -1,8 +1,11 @@
 package com.example.bankservice.adapter.inbound;
 
+import com.example.bankservice.resource.DepositResource;
+import com.example.bankservice.resource.WithdrawResource;
 import com.example.bankservice.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,13 +17,13 @@ public class TransactionController {
     TransactionService transactionService;
 
     @PostMapping("/deposit")
-    public void depositMoney(String accType, String moneyType, String accountNum, double amount){
-       transactionService.depositMoney(accType,moneyType, accountNum, amount);
+    public void depositMoney(@RequestBody DepositResource depositResource){
+       transactionService.depositMoney(depositResource);
     }
 
     @PostMapping("/withdraw")
-    public void withdrawMoney(String accType, String moneyType, String accountNum, double amount, String password){
-       transactionService.withdrawMoney(accType,moneyType, accountNum, amount, password);
+    public void withdrawMoney(@RequestBody WithdrawResource withdrawResource){
+       transactionService.withdrawMoney(withdrawResource);
     }
 
 
