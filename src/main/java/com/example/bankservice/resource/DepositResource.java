@@ -1,5 +1,6 @@
 package com.example.bankservice.resource;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 /**
@@ -11,8 +12,11 @@ import lombok.*;
 @Getter
 @Setter
 public class DepositResource {
+    @JsonProperty("acc_type")
     private String accType;
+    @JsonProperty("money_type")
     private String moneyType;
+    @JsonProperty("account_num")
     private String accountNum;
     private double amount;
 }
