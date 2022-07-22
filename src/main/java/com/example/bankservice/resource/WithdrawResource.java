@@ -18,5 +18,6 @@ public class WithdrawResource {
     private String moneyType;
     @JsonProperty("account_num")
     private String accountNum;
+    private double amount;
     private String password;
 }
