@@ -4,8 +4,10 @@ import com.example.bankservice.account_flow.Account;
 import com.example.bankservice.exception.DataConflictException;
 import com.example.bankservice.exception.DataNotFoundException;
 import com.example.bankservice.modal.AccountInfo;
+import com.example.bankservice.modal.Transaction;
 import com.example.bankservice.modal.UserInfo;
 import com.example.bankservice.repository.AccountRepository;
+import com.example.bankservice.repository.TransactionRepository;
 import com.example.bankservice.repository.UserRepository;
 import com.example.bankservice.resource.UserInfoResource;
 import com.example.bankservice.util.MoneyConverter;
@@ -15,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Optional;
 
 @Component
 public class SavingsAccount implements Account {
@@ -23,6 +28,9 @@ public class SavingsAccount implements Account {
     UserRepository userRepository;
     @Autowired
     AccountRepository accountRepository;
+
+    @Autowired
+    TransactionRepository transactionRepository;
 
     @Autowired
     MoneyConverter moneyConverter;
@@ -52,19 +60,47 @@ public class SavingsAccount implements Account {
 
     @Override
     public void deposit(String accType, String moneyType, String accountNum, double amount) {
-        if(accountExist(accountNum)){
+        if(!accountExist(accountNum)){
             throw new DataNotFoundException("The account Number not exist");
         }
-        moneyConverter.moneyConverter(moneyType, amount);
+        double convertedAmount = moneyConverter.moneyConverter(moneyType, amount);
+        Optional<AccountInfo> account = accountRepository.findByAccountNumber(accountNum);
+        account.get().setCurrentBalance(account.get().getCurrentBalance()+convertedAmount);
+        Instant instant = Instant.now();
+        Timestamp timestamp = Timestamp.from(instant);
+        Transaction transaction = new Transaction(0L, "DEPOSIT",timestamp, amount, true);
+        accountRepository.save(account.get());
+        transactionRepository.save(transaction);
     }
 
     @Override
     public void withdraw(String accType, String moneyType, String accountNum, double amount, String password) {
+        if(accountExist(accountNum)){
+            throw new DataNotFoundException("The account Number not exist");
+        }
+        Optional<AccountInfo> account = accountRepository.findByAccountNumber(accountNum);
+        if(!password.equals(account.get().getUser().getPassword())){
+            throw new DataConflictException("Password is Wrong!");
+        }
 
+        if(creditLimitExceed(accType,accountNum,amount)){
+            throw new DataConflictException("No Balance");
+        }
+        double convertedAmount = moneyConverter.moneyConverter(moneyType, amount);
+        account.get().setCurrentBalance(account.get().getCurrentBalance()-convertedAmount);
+        Instant instant = Instant.now();
+        Timestamp timestamp = Timestamp.from(instant);
+        Transaction transaction = new Transaction(0L, "WITHDRAW",timestamp, amount, true);
+        accountRepository.save(account.get());
+        transactionRepository.save(transaction);
     }
 
     @Override
     public boolean creditLimitExceed(String accType, String accountNum, double amount) {
+        Optional<AccountInfo> accountInfo = accountRepository.findByAccountNumber(accountNum);
+        if(accountInfo.get().getCurrentBalance() <= amount){
+            return true;
+        }
         return false;
     }
 

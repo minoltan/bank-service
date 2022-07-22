@@ -3,6 +3,8 @@ package com.example.bankservice.adapter.inbound;
 import com.example.bankservice.resource.DepositResource;
 import com.example.bankservice.resource.WithdrawResource;
 import com.example.bankservice.service.TransactionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,9 +18,12 @@ public class TransactionController {
     @Autowired
     TransactionService transactionService;
 
+    private Logger logger = LoggerFactory.getLogger(UserRegistrationController.class);
+
     @PostMapping("/deposit")
     public void depositMoney(@RequestBody DepositResource depositResource){
-       transactionService.depositMoney(depositResource);
+        logger.info("request - depositMoney | (URL - /api/v1/transaction/deposit");
+        transactionService.depositMoney(depositResource);
     }
 
     @PostMapping("/withdraw")

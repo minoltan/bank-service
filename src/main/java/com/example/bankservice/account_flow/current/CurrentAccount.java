@@ -63,7 +63,7 @@ public class CurrentAccount implements Account {
 
     @Override
     public void deposit(String accType, String moneyType, String accountNum, double amount) {
-         if(accountExist(accountNum)){
+         if(!accountExist(accountNum)){
              throw new DataNotFoundException("The account Number not exist");
          }
          double convertedAmount = moneyConverter.moneyConverter(moneyType, amount);
