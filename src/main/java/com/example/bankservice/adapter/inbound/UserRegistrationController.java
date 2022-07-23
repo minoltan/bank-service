@@ -24,9 +24,9 @@ public class UserRegistrationController {
      */
     @PostMapping("/user")
     @CrossOrigin(origins = "*")
-    public void registerAccount(@RequestBody UserInfoResource userInfoResource){
+    public String registerAccount(@RequestBody UserInfoResource userInfoResource){
         logger.info("request - registerAccount | (URL - /api/v1/register/user");
-        userRegistrationService.registerAccount(userInfoResource);
+        return userRegistrationService.registerAccount(userInfoResource);
     }
 
 

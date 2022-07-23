@@ -43,7 +43,7 @@ public class CurrentAccount implements Account {
 
     @Override
     @Transactional
-    public void registerAccount(UserInfoResource userInfoResource) {
+    public String registerAccount(UserInfoResource userInfoResource) {
         Optional<UserInfo> existUser = userRepository.findByIdentityNo(userInfoResource.getIdentityNo());
         if(existUser.isPresent()){
             List<AccountInfo> accountInfoList = accountRepository.findByUser(existUser.get());
@@ -62,6 +62,7 @@ public class CurrentAccount implements Account {
             UserInfo userInfo = saveUser(userInfoResource);
             saveAccount(userInfo,userInfoResource);
         }
+        return "Registered Success";
     }
 
     @Override
@@ -88,7 +89,7 @@ public class CurrentAccount implements Account {
     }
 
     @Override
-    public void deposit(String accType, String moneyType, String accountNum, double amount) {
+    public String deposit(String accType, String moneyType, String accountNum, double amount) {
          Optional<AccountInfo> accountInfo = accountRepository.findByAccountNumber(accountNum);
          if(!accountExist(accountNum)){
              throw new DataNotFoundException("The account Number not exist");
@@ -102,10 +103,11 @@ public class CurrentAccount implements Account {
          Transaction transaction = new Transaction(0L, "DEPOSIT",timestamp, amount, true, accountInfo.get());
          accountRepository.save(accountInfo.get());
          transactionRepository.save(transaction);
+         return "Transaction Success";
     }
 
     @Override
-    public void withdraw(String accType, String moneyType, String accountNum, double amount, String password) {
+    public String withdraw(String accType, String moneyType, String accountNum, double amount, String password) {
         Optional<AccountInfo> accountInfo = accountRepository.findByAccountNumber(accountNum);
         if(!accountExist(accountNum)){
             throw new DataNotFoundException("The account Number not exist");
@@ -126,6 +128,7 @@ public class CurrentAccount implements Account {
         Transaction transaction = new Transaction(0L, "WITHDRAW",timestamp, amount, true, accountInfo.get());
         accountRepository.save(accountInfo.get());
         transactionRepository.save(transaction);
+        return "Transaction Success";
     }
 
     @Override

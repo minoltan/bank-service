@@ -12,20 +12,17 @@ public class TransactionService {
     @Autowired
     AccountFactory accountFactory;
 
-    public void depositMoney(DepositResource depositResource){
+    public String depositMoney(DepositResource depositResource){
         // can record the depositor's detail, here I omit that
         Account account =  accountFactory.getAccountType(depositResource.getAccType());
-        account.deposit(depositResource.getAccType(), depositResource.getMoneyType(), depositResource.getAccountNum(), depositResource.getAmount());
+        return account.deposit(depositResource.getAccType(), depositResource.getMoneyType(), depositResource.getAccountNum(), depositResource.getAmount());
     }
 
-    public void withdrawMoney(WithdrawResource withdrawResource){
+    public String withdrawMoney(WithdrawResource withdrawResource){
         Account account =  accountFactory.getAccountType(withdrawResource.getAccType());
-        account.withdraw(withdrawResource.getAccType(), withdrawResource.getMoneyType(), withdrawResource.getAccountNum(), withdrawResource.getAmount(), withdrawResource.getPassword());
+        return account.withdraw(withdrawResource.getAccType(), withdrawResource.getMoneyType(), withdrawResource.getAccountNum(), withdrawResource.getAmount(), withdrawResource.getPassword());
     }
 
-    // Todo: Need to set response entity & proper response
-    // Todo: Need to test & write test cases
-    // Todo: Need to verify logics, because it is prepared within 2 hrs
 
 
 }

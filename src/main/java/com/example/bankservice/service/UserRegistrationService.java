@@ -11,9 +11,9 @@ public class UserRegistrationService {
     @Autowired
     AccountFactory accountFactory;
 
-    public void registerAccount(UserInfoResource userInfoResource){
+    public String registerAccount(UserInfoResource userInfoResource){
         Account account =  accountFactory.getAccountType(userInfoResource.getType());
-        account.registerAccount(userInfoResource);
+        return account.registerAccount(userInfoResource);
     }
 
     // save all currencies in USD

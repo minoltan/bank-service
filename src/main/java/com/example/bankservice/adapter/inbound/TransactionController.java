@@ -21,15 +21,17 @@ public class TransactionController {
 
     private Logger logger = LoggerFactory.getLogger(UserRegistrationController.class);
 
+    //Can use custom response entity
+
     @PostMapping("/deposit")
-    public void depositMoney(@RequestBody DepositResource depositResource){
+    public String depositMoney(@RequestBody DepositResource depositResource){
         logger.info("request - depositMoney | (URL - /api/v1/transaction/deposit");
-        transactionService.depositMoney(depositResource);
+        return transactionService.depositMoney(depositResource);
     }
 
     @PostMapping("/withdraw")
-    public void withdrawMoney(@RequestBody WithdrawResource withdrawResource){
-       transactionService.withdrawMoney(withdrawResource);
+    public String withdrawMoney(@RequestBody WithdrawResource withdrawResource){
+       return transactionService.withdrawMoney(withdrawResource);
     }
 
 
