@@ -10,9 +10,9 @@ import com.example.bankservice.repository.AccountRepository;
 import com.example.bankservice.repository.TransactionRepository;
 import com.example.bankservice.repository.UserRepository;
 import com.example.bankservice.resource.UserInfoResource;
+import com.example.bankservice.util.CurrencyValidator;
 import com.example.bankservice.util.MoneyConverter;
 import com.example.bankservice.util.UUIDGenerator;
-import org.apache.tomcat.jni.Time;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +34,8 @@ public class CurrentAccount implements Account {
     AccountRepository accountRepository;
     @Autowired
     TransactionRepository transactionRepository;
+    @Autowired
+    CurrencyValidator currencyValidator;
 
 
     private final double creditLimit = 1000.00;
@@ -41,16 +43,36 @@ public class CurrentAccount implements Account {
     @Override
     @Transactional
     public void registerAccount(UserInfoResource userInfoResource) {
-        if(userExist(userInfoResource.getIdentityNo())){
-            throw new DataConflictException("User Already Exist!");
+        Optional<UserInfo> existUser = userRepository.findByIdentityNo(userInfoResource.getIdentityNo());
+        if(existUser.isPresent()){
+            Optional<AccountInfo> accountInfo = accountRepository.findByUser(existUser.get());
+            if(accountInfo.isPresent() && !accountInfo.get().getType().equals("CURRENT")){
+                saveAccount(existUser.get(), userInfoResource);
+            }else{
+                throw new DataConflictException("The User Already have Current account!");
+            }
+        }else{
+            if(!currencyValidator.validateCurrency(userInfoResource.getCurrency())){
+                throw new DataNotFoundException("Currency Not Available");
+            }
+            UserInfo userInfo = saveUser(userInfoResource);
+            saveAccount(userInfo, userInfoResource);
         }
+    }
+
+    @Override
+    public UserInfo saveUser(UserInfoResource userInfoResource){
         UserInfo userInfo = new UserInfo();
-        String accountNumber = UUIDGenerator.generateUUID();
-        AccountInfo currentAccount = new AccountInfo(0L, 0.0, "CURRENT", creditLimit,accountNumber, userInfo, "1120");
         BeanUtils.copyProperties(userInfoResource, userInfo);
-        userInfo.setPassword("1120");
-        userRepository.save(userInfo);
-        accountRepository.save(currentAccount);
+        userInfo.setPassword("1234");
+        return userRepository.save(userInfo);
+    }
+
+    @Override
+    public void saveAccount(UserInfo userInfo,UserInfoResource userInfoResource){
+        String accountNumber = UUIDGenerator.generateUUID();
+        AccountInfo savingsAccount = new AccountInfo(0L, 0.0, "CURRENT", creditLimit,accountNumber, userInfo, "1120", userInfoResource.getCurrency());
+        accountRepository.save(savingsAccount);
     }
 
     @Override
@@ -66,7 +88,7 @@ public class CurrentAccount implements Account {
          if(!accountExist(accountNum)){
              throw new DataNotFoundException("The account Number not exist");
          }
-         double convertedAmount = moneyConverter.moneyConverter(moneyType, amount);
+         double convertedAmount = moneyConverter.convert(moneyType, amount);
          Optional<AccountInfo> account = accountRepository.findByAccountNumber(accountNum);
          account.get().setCurrentBalance(account.get().getCurrentBalance()+convertedAmount);
          Instant instant = Instant.now();
@@ -89,7 +111,7 @@ public class CurrentAccount implements Account {
         if(creditLimitExceed(accType,accountNum,amount)){
             throw new DataConflictException("No Balance");
         }
-        double convertedAmount = moneyConverter.moneyConverter(moneyType, amount);
+        double convertedAmount = moneyConverter.convert(moneyType, amount);
         account.get().setCurrentBalance(account.get().getCurrentBalance()-convertedAmount);
         Instant instant = Instant.now();
         Timestamp timestamp = Timestamp.from(instant);

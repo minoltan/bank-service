@@ -22,4 +22,5 @@ public class AccountInfo {
     private UserInfo user;
     // It can be ManyToOne but I simplified with random ID
     private String branchId;
+    private String currencyType;
 }

@@ -2,6 +2,7 @@ package com.example.bankservice.account_flow;
 
 import com.example.bankservice.account_flow.current.CurrentAccount;
 import com.example.bankservice.account_flow.savings.SavingsAccount;
+import com.example.bankservice.exception.DataNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +22,7 @@ public class AccountFactory {
             case "SAVINGS":
                 return savingsAccount;
             default:
-                return null;
+                throw new DataNotFoundException("The Required Account type is not present!");
         }
     }
 
