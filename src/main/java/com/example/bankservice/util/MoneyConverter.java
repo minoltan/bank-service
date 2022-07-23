@@ -16,6 +16,7 @@ public class MoneyConverter {
 
     private double EURO_RATE = 1.25;
     // Use any current currency rate api and get the rate and convert it to USD
+    // For now I did not use the currency table
     public double convert(String type, double amount){
         if(!currencyValidator.validateCurrency(type)){
            throw new DataNotFoundException("Currency Not Available");

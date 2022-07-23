@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -45,18 +46,21 @@ public class CurrentAccount implements Account {
     public void registerAccount(UserInfoResource userInfoResource) {
         Optional<UserInfo> existUser = userRepository.findByIdentityNo(userInfoResource.getIdentityNo());
         if(existUser.isPresent()){
-            Optional<AccountInfo> accountInfo = accountRepository.findByUser(existUser.get());
-            if(accountInfo.isPresent() && !accountInfo.get().getType().equals("CURRENT")){
-                saveAccount(existUser.get(), userInfoResource);
-            }else{
-                throw new DataConflictException("The User Already have Current account!");
+            List<AccountInfo> accountInfoList = accountRepository.findByUser(existUser.get());
+            for(AccountInfo singleAccount: accountInfoList){
+                if(!singleAccount.getType().equals("CURRENT")){
+                    saveAccount(existUser.get(), userInfoResource);
+                }else{
+                    throw new DataConflictException("The User Already have Current account!");
+                }
             }
+
         }else{
             if(!currencyValidator.validateCurrency(userInfoResource.getCurrency())){
                 throw new DataNotFoundException("Currency Not Available");
             }
             UserInfo userInfo = saveUser(userInfoResource);
-            saveAccount(userInfo, userInfoResource);
+            saveAccount(userInfo,userInfoResource);
         }
     }
 
@@ -85,38 +89,42 @@ public class CurrentAccount implements Account {
 
     @Override
     public void deposit(String accType, String moneyType, String accountNum, double amount) {
+         Optional<AccountInfo> accountInfo = accountRepository.findByAccountNumber(accountNum);
          if(!accountExist(accountNum)){
              throw new DataNotFoundException("The account Number not exist");
+         }else if(!accountInfo.get().getType().equals("CURRENT")){
+             throw new DataNotFoundException("The account holder not registered with this account");
          }
          double convertedAmount = moneyConverter.convert(moneyType, amount);
-         Optional<AccountInfo> account = accountRepository.findByAccountNumber(accountNum);
-         account.get().setCurrentBalance(account.get().getCurrentBalance()+convertedAmount);
+         accountInfo.get().setCurrentBalance(accountInfo.get().getCurrentBalance()+convertedAmount);
          Instant instant = Instant.now();
          Timestamp timestamp = Timestamp.from(instant);
-         Transaction transaction = new Transaction(0L, "DEPOSIT",timestamp, amount, true);
-         accountRepository.save(account.get());
+         Transaction transaction = new Transaction(0L, "DEPOSIT",timestamp, amount, true, accountInfo.get());
+         accountRepository.save(accountInfo.get());
          transactionRepository.save(transaction);
     }
 
     @Override
     public void withdraw(String accType, String moneyType, String accountNum, double amount, String password) {
-        if(accountExist(accountNum)){
+        Optional<AccountInfo> accountInfo = accountRepository.findByAccountNumber(accountNum);
+        if(!accountExist(accountNum)){
             throw new DataNotFoundException("The account Number not exist");
+        }else if(!accountInfo.get().getType().equals("CURRENT")){
+            throw new DataNotFoundException("The account holder not registered with this account");
         }
-        Optional<AccountInfo> account = accountRepository.findByAccountNumber(accountNum);
-        if(!password.equals(account.get().getUser().getPassword())){
-           throw new DataConflictException("Password is Wrong!");
+        if(!password.equals(accountInfo.get().getUser().getPassword())){
+            throw new DataConflictException("Password is Wrong!");
         }
 
         if(creditLimitExceed(accType,accountNum,amount)){
             throw new DataConflictException("No Balance");
         }
         double convertedAmount = moneyConverter.convert(moneyType, amount);
-        account.get().setCurrentBalance(account.get().getCurrentBalance()-convertedAmount);
+        accountInfo.get().setCurrentBalance(accountInfo.get().getCurrentBalance()-convertedAmount);
         Instant instant = Instant.now();
         Timestamp timestamp = Timestamp.from(instant);
-        Transaction transaction = new Transaction(0L, "WITHDRAW",timestamp, amount, true);
-        accountRepository.save(account.get());
+        Transaction transaction = new Transaction(0L, "WITHDRAW",timestamp, amount, true, accountInfo.get());
+        accountRepository.save(accountInfo.get());
         transactionRepository.save(transaction);
     }
 

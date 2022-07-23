@@ -3,10 +3,7 @@ package com.example.bankservice.modal;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Data
@@ -24,4 +21,6 @@ public class Transaction {
     private Timestamp timestamp;
     private double amount;
     private boolean status;
+    @ManyToOne
+    private AccountInfo accountInfo;
 }
